@@ -21,7 +21,7 @@ export default {
 
 // Serve Gateway Block Page
 function serveGatewayPage(url) {
-  const gatewayPageHTML = `const blockPageHTML = \`<!DOCTYPE html>
+  const gatewayPageHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -724,6 +724,51 @@ function serveGatewayPage(url) {
             icon.style.transform = 'rotate(-90deg)';
         }
     }
+
+    // Set initial collapsed state
+    document.getElementById('collapse-icon').style.transform = 'rotate(-90deg)';
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('theme-icon-sun');
+    const moonIcon = document.getElementById('theme-icon-moon');
+    const html = document.documentElement;
+
+    // Check for saved theme preference or default to light theme
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme) {
+        html.setAttribute('data-theme', savedTheme);
+    } else if (systemPrefersDark) {
+        html.setAttribute('data-theme', 'dark');
+    } else {
+        html.setAttribute('data-theme', 'light');
+    }
+
+    // Update icon based on current theme
+    function updateThemeIcon() {
+        const currentTheme = html.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+        } else {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+        }
+    }
+
+    updateThemeIcon();
+
+    // Toggle theme on button click
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon();
+    });
 
     // Copy technical details to clipboard
     function copyTechnicalDetails() {
