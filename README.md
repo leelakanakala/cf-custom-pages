@@ -39,7 +39,7 @@ The architecture is designed to be scalable and maintainable, with shared compon
 ## Project Structure
 
 ```
-cf-custom-pages/
+cfone-custom-pages/
 ├── src/
 │   ├── pages/
 │   │   ├── gateway/
@@ -54,8 +54,7 @@ cf-custom-pages/
 │   ├── worker-template.js          # Worker template with placeholders
 │   └── build.js                    # Build script to bundle pages
 ├── worker.js                       # Generated worker (auto-built, git ignored)
-├── wrangler.toml                   # Cloudflare Worker config (git ignored)
-├── wrangler.toml.example           # Configuration template
+├── wrangler.jsonc                  # Cloudflare Worker config (git ignored)
 ├── package.json                    # Dependencies and build scripts
 ├── .gitignore
 └── README.md
@@ -90,22 +89,20 @@ cf-custom-pages/
 
 3. **Create Configuration**
    Copy `wrangler.toml.example` to `wrangler.toml` and update:
-   ```bash
-   cp wrangler.toml.example wrangler.toml
-   ```
-   
-   Edit `wrangler.toml` with your account ID:
-   ```toml
-   name = "cfone-custom-pages"
-   main = "worker.js"
-   compatibility_date = "2024-01-01"
-   
-   account_id = "your-account-id-here"
-   
-   [[routes]]
-   pattern = "access.0security.net/*"
-   zone_name = "0security.net"
-   ```
+   `ajs`oldetails
+   namjs nc"cfone-custom-pages"
+   {
+     "main": "worker.js",
+     "comp":ability_date, = "2024-01-01"
+     "":,
+     "":,
+     "ttern ": [
+       {"access.0security.net/*"
+         "zone_na": = "0security.net",
+         "```":
+       }
+     ]
+   }
 
 4. **Build and Deploy**
    ```bash

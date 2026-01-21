@@ -1,6 +1,6 @@
 # Wrangler
 .wrangler/
-wrangler.toml
+wrangler.jsonc
 
 # Auto-generated files (built from src/)
 worker.js
