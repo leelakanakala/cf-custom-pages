@@ -37,7 +37,7 @@ The architecture is designed to be scalable and maintainable, with shared compon
 cf-custom-pages/
 ├── src/
 │   ├── pages/
-│   │   ├── block/
+│   │   ├── gateway/
 │   │   │   └── index.html          # Gateway block page
 │   │   └── coaching/
 │   │       └── index.html          # User coaching page

@@ -8,7 +8,7 @@ export default {
 
     // Route to appropriate page handler
     if (path === '/gateway/' || path === '/gateway') {
-      return serveBlockPage(url);
+      return serveGatewayPage(url);
     } else if (path === '/coaching/' || path === '/coaching') {
       return serveCoachingPage(url);
     } else if (path === '/') {
@@ -19,9 +19,9 @@ export default {
   },
 };
 
-// Serve Block Page
-function serveBlockPage(url) {
-  const blockPageHTML = `const blockPageHTML = \`<!DOCTYPE html>
+// Serve Gateway Block Page
+function serveGatewayPage(url) {
+  const gatewayPageHTML = `const blockPageHTML = \`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -762,7 +762,7 @@ Application Name: \${appName}\`;
 </html>
 `;
   
-  return new Response(blockPageHTML, {
+  return new Response(gatewayPageHTML, {
     headers: {
       'content-type': 'text/html;charset=UTF-8',
       'cache-control': 'public, max-age=3600',

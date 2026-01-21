@@ -8,7 +8,7 @@ export default {
 
     // Route to appropriate page handler
     if (path === '/gateway/' || path === '/gateway') {
-      return serveBlockPage(url);
+      return serveGatewayPage(url);
     } else if (path === '/coaching/' || path === '/coaching') {
       return serveCoachingPage(url);
     } else if (path === '/') {
@@ -19,11 +19,11 @@ export default {
   },
 };
 
-// Serve Block Page
-function serveBlockPage(url) {
-  const blockPageHTML = `__BLOCK_PAGE_HTML__`;
+// Serve Gateway Block Page
+function serveGatewayPage(url) {
+  const gatewayPageHTML = `__GATEWAY_PAGE_HTML__`;
   
-  return new Response(blockPageHTML, {
+  return new Response(gatewayPageHTML, {
     headers: {
       'content-type': 'text/html;charset=UTF-8',
       'cache-control': 'public, max-age=3600',
