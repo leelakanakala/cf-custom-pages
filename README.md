@@ -38,7 +38,7 @@ cf-custom-pages/
 ├── src/
 │   ├── pages/
 │   │   ├── gateway/
-│   │   │   └── index.html          # Gateway block page
+│   │   │   └── block.html          # Gateway block page
 │   │   └── coaching/
 │   │       └── index.html          # User coaching page
 │   ├── shared/

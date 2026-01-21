@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Read HTML files
-const gatewayPageHTML = fs.readFileSync(path.join(__dirname, 'pages/gateway/index.html'), 'utf-8');
+const gatewayPageHTML = fs.readFileSync(path.join(__dirname, 'pages/gateway/block.html'), 'utf-8');
 const coachingPageHTML = fs.readFileSync(path.join(__dirname, 'pages/coaching/index.html'), 'utf-8');
 
 // Read worker template
