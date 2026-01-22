@@ -1,43 +1,25 @@
 # Cloudflare Custom Pages
 
-A scalable collection of custom pages for Cloudflare Secure Web Gateway (SWG) and user coaching, providing clear, informative feedback and security awareness training.
-
-## Overview
-
-This project implements a Cloudflare Worker that serves multiple custom pages:
-- **Gateway Block Page** (`/cf-gateway/`) - Displays policy context when access is blocked by SWG
-- **Access Info Page** (`/cf-access/`) - Displays WARP and device information for authenticated users
-- **Coaching Page** (`/coaching/`) - User security awareness and training (coming soon)
-- **Future pages** - Easily add more custom pages as needed
-
-The architecture is designed to be scalable and maintainable, with shared components and a build system that bundles multiple pages into a single worker.
-
-> **📖 For detailed authentication flow and cookie architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
-
-## Screenshot
-
-![Gateway Block Page](docs/images/block-page-screenshot.png)
-*Gateway block page showing policy context with light theme, collapsible details, and technical information footer*
+Custom pages for Cloudflare Secure Web Gateway (SWG) and Cloudflare Access, providing clear feedback and security information.
 
 ## Features
 
-### 🎨 Modern UI/UX
-- **Dual Theme Support**: Light theme (default) and dark theme with manual toggle button
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
-- **Eye-Friendly Colors**: Carefully selected color schemes to reduce eye strain
-- **Smooth Animations**: Subtle transitions and hover effects for better user experience
+### Gateway Block Page (`/cf-gateway/`)
+- Displays policy context when access is blocked by SWG
+- Shows blocked URL, categories, and policy details
+- Dual theme support (light/dark)
+- Responsive design
+- Copy technical details for IT support
 
-### 📋 Policy Information Display
-- **Dynamic Block Reason**: Shows the blocked URL and categories with color highlighting
-- **Collapsible Details**: Policy context details section starts collapsed for cleaner view
-- **Technical Information**: Device ID, Rule ID, Source IP, and Account ID in footer
-- **Copy Functionality**: One-click button to copy all technical details for IT support
+### Access Info Page (`/cf-access/`)
+- Displays user identity and device information
+- Shows WARP status and security posture
+- Device details (name, model, OS version)
+- Posture checks (Crowdstrike, OS updates)
+- Leverages Cloudflare Access authentication
 
-### 🔧 Technical Features
-- **Query Parameter Parsing**: Automatically extracts and displays all Cloudflare SWG context fields
-- **Multiple Category Support**: Handles multiple category values for blocked content
-- **Theme Persistence**: User's theme preference saved in localStorage
-- **System Preference Detection**: Respects OS/browser dark mode settings
+### Coaching Page (`/coaching/`)
+- Security awareness and training (coming soon)
 
 ## Project Structure
 
@@ -45,188 +27,150 @@ The architecture is designed to be scalable and maintainable, with shared compon
 cfone-custom-pages/
 ├── src/
 │   ├── pages/
-│   │   ├── cf-gateway/
-│   │   │   └── block.html          # Gateway block page
+│   │   ├── cf-gateway/block.html
 │   │   ├── cf-access/
-│   │   │   ├── index.html          # Access info page
+│   │   │   ├── index.html
 │   │   │   └── scripts/
-│   │   │       ├── warpinfo.js     # WARP info fetching
-│   │   │       └── deviceinfo.js   # Device info fetching
-│   │   └── coaching/
-│   │       └── index.html          # User coaching page
+│   │   │       ├── warpinfo.js
+│   │   │       ├── deviceinfo.js
+│   │   │       └── postureinfo.js
+│   │   └── coaching/index.html
 │   ├── shared/
-│   │   ├── styles/
-│   │   │   └── theme.css           # Shared theme variables
-│   │   └── scripts/
-│   │       └── theme-toggle.js     # Shared theme toggle logic
-│   ├── worker-template.js          # Worker template with placeholders
-│   └── build.js                    # Build script to bundle pages
-├── main.js                         # Generated worker (auto-built)
-├── wrangler.jsonc                  # Cloudflare Worker config
-├── package.json                    # Dependencies and build scripts
-├── ARCHITECTURE.md                 # Authentication flow documentation
-├── .gitignore
+│   │   ├── styles/theme.css
+│   │   └── scripts/theme-toggle.js
+│   ├── worker-template.js
+│   └── build.js
+├── main.js (auto-generated)
+├── wrangler.jsonc (gitignored)
+├── wrangler.example.jsonc
+├── ARCHITECTURE.md
 └── README.md
 ```
 
-### Directory Explanation
-
-- **`src/pages/`** - Each subdirectory contains a complete HTML page
-- **`src/shared/`** - Reusable CSS and JavaScript across all pages
-- **`src/build.js`** - Bundles HTML pages into the worker
-- **`worker.js`** - Auto-generated, deployed to Cloudflare (not in git)
-
-## Deployment
+## Quick Start
 
 ### Prerequisites
-- Node.js 16+ installed
+- Node.js 16+
 - Cloudflare account
-- Wrangler CLI (`npm install -g wrangler` or use local version)
-- API token with Workers permissions
+- Wrangler CLI
 
-### Steps
+### Installation
 
-1. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+# Install dependencies
+npm install
 
-2. **Configure Account**
-   ```bash
-   export CLOUDFLARE_API_TOKEN="your-api-token"
-   ```
+# Copy and configure wrangler.jsonc
+cp wrangler.example.jsonc wrangler.jsonc
+# Edit wrangler.jsonc with your account_id and routes
 
-3. **Create Configuration**
-   Copy `wrangler.toml.example` to `wrangler.toml` and update:
-   `ajs`oldetails
-   namjs nc"cfone-custom-pages"
-   {
-     "main": "worker.js",
-     "comp":ability_date, = "2024-01-01"
-     "":,
-     "":,
-     "ttern ": [
-       {"access.0security.net/*"
-         "zone_na": = "0security.net",
-         "```":
-       }
-     ]
-   }
-
-4. **Build and Deploy**
-   ```bash
-   npm run deploy
-   ```
-   
-   Or build and deploy separately:
-   ```bash
-   npm run build      # Bundles pages into worker.js
-   wrangler deploy    # Deploys to Cloudflare
-   ```
+# Build and deploy
+npm run deploy
+```
 
 ### Development
 
-**Local Testing**
 ```bash
+# Build worker
+npm run build
+
+# Local development
 npm run dev
+
+# Deploy to Cloudflare
+npm run deploy
 ```
-This builds the worker and starts a local development server.
 
 ## Configuration
 
-### Gateway Block Page in Cloudflare SWG
+### Gateway Block Page
 
-1. Navigate to **Zero Trust** > **Gateway** > **Firewall Policies**
+1. Navigate to **Zero Trust** → **Gateway** → **Firewall Policies**
 2. Edit your block policy
-3. Set **Block page** to: `https://access.0security.net/cf-gateway/`
-4. Cloudflare will automatically append policy context as query parameters
+3. Set **Block page** to: `https://access.example.com/cf-gateway/`
+4. Cloudflare appends policy context as query parameters
 
-### Access Info Page with Cloudflare Access
+### Access Info Page
 
-The `/cf-access/` page displays WARP and device information for authenticated users. It leverages Cloudflare Access authentication:
+1. Configure Cloudflare Access for your domain
+2. Set cookie domain to `.example.com` (wildcard)
+3. Users authenticate once, access `/cf-access/` without re-login
+4. Optional: Configure `BEARER_TOKEN` secret for enhanced device/posture data
 
-1. **Configure Cloudflare Access** for your domain (e.g., `openwebui.0security.net`)
-2. **Set cookie domain** to `.0security.net` (wildcard for all subdomains)
-3. Users authenticate once and can access `/cf-access/` without re-authentication
-4. The page displays:
-   - User information (name, email)
-   - WARP status and gateway account
-   - Device information (model, name, OS version, ID)
+```bash
+# Set Bearer token for API calls
+wrangler secret put BEARER_TOKEN
+```
 
-For detailed authentication flow and architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md)
+**Bearer Token Permissions:**
+- Zero Trust → Devices → Read
+- Zero Trust → Device Posture → Read
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed authentication flow.
 
 ## Query Parameters
 
-The block page expects these query parameters from Cloudflare SWG:
+Gateway block page expects these from Cloudflare SWG:
 
 | Parameter | Description |
 |-----------|-------------|
-| `cf_site_uri` | The blocked URL |
-| `cf_request_category_names` | Content categories (can be multiple) |
-| `cf_application_name` | Application name if detected |
-| `cf_policy_name` | Name of the blocking policy |
-| `cf_rule_id` | Unique rule identifier |
-| `cf_device_id` | User's device identifier |
-| `cf_source_ip` | User's source IP address |
-| `cf_account_id` | Cloudflare account ID |
+| `cf_site_uri` | Blocked URL |
+| `cf_request_category_names` | Content categories |
+| `cf_policy_name` | Blocking policy name |
+| `cf_rule_id` | Rule identifier |
+| `cf_device_id` | Device identifier |
+| `cf_source_ip` | Source IP address |
+| `cf_account_id` | Account ID |
 
 ## Adding New Pages
 
-The architecture makes it easy to add new custom pages:
+1. Create page directory: `src/pages/your-page/`
+2. Add HTML file: `src/pages/your-page/index.html`
+3. Update `src/worker-template.js` with route and serve function
+4. Update `src/build.js` to bundle the page
+5. Build and test: `npm run build && npm run dev`
 
-1. **Create Page Directory**
-   ```bash
-   mkdir -p src/pages/your-page-name
-   ```
+## Best Practices
 
-2. **Add HTML File**
-   Create `src/pages/your-page-name/index.html` with your page content
+### Security
+- `wrangler.jsonc` is gitignored (contains account/domain info)
+- Use `wrangler.example.jsonc` as template
+- Bearer token stored as Wrangler secret (never in code)
+- HttpOnly cookies prevent XSS
+- Secure flag ensures HTTPS only
 
-3. **Update Worker Template**
-   Edit `src/worker-template.js`:
-   - Add route in the `fetch()` handler
-   - Add a new serve function
-   - Add placeholder in template
+### Development
+- Build before deploying: `npm run build`
+- Test locally: `npm run dev`
+- Use semantic versioning for releases
+- Keep ARCHITECTURE.md updated
 
-4. **Update Build Script**
-   Edit `src/build.js` to read and bundle your new page
+### Code Quality
+- Console logs only in build script
+- Error handling in all async functions
+- Consistent code formatting
+- Comments for complex logic
 
-5. **Build and Test**
-   ```bash
-   npm run build
-   npm run dev
-   ```
+## Troubleshooting
 
-### Example: Adding a "Terms" Page
+**Cookie Not Sent (401 errors)**
+- Check cookie domain is `.example.com` (with leading dot)
+- Verify HTTPS is used
+- Ensure cookie hasn't expired
 
-```javascript
-// In src/worker-template.js
-if (path === '/terms/' || path === '/terms') {
-  return serveTermsPage(url);
-}
+**Device/Posture Data Empty**
+- Verify `BEARER_TOKEN` is configured: `wrangler secret list`
+- Check Bearer token has correct permissions
+- Verify `account_id` exists in identity data
 
-function serveTermsPage(url) {
-  const termsPageHTML = `__TERMS_PAGE_HTML__`;
-  return new Response(termsPageHTML, {
-    headers: { 'content-type': 'text/html;charset=UTF-8' }
-  });
-}
+**Worker Logs**
+```bash
+# View real-time logs
+wrangler tail
+
+# View specific deployment logs
+wrangler tail --format=pretty
 ```
-
-## Customization
-
-### Branding
-- Update logo SVG in the header section
-- Modify company name "Zero Security Corp"
-- Change footer text and copyright
-
-### Colors
-- Edit CSS variables in `:root` for light theme
-- Edit CSS variables in `:root[data-theme="dark"]` for dark theme
-
-### Contact Information
-- Update IT support email: `it@0security.net`
-- Update intranet URL: `https://intranet.corp.0security.net`
 
 ## Browser Support
 
@@ -237,8 +181,10 @@ function serveTermsPage(url) {
 
 ## License
 
-Proprietary - Zero Security Corp
+Proprietary
 
-## Support
+## Documentation
 
-For issues or questions, contact IT support at it@0security.net
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Authentication flow and technical details
+- [Cloudflare Access Docs](https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/)
+- [Workers Docs](https://developers.cloudflare.com/workers/)
