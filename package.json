@@ -2,7 +2,7 @@
   "name": "cf-custom-pages",
   "version": "1.0.0",
   "description": "Cloudflare custom pages for SWG and user coaching",
-  "main": "worker.js",
+  "main": "main.js",
   "scripts": {
     "build": "node src/build.js",
     "dev": "npm run build && wrangler dev",

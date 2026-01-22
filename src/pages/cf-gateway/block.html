@@ -711,13 +711,11 @@
 
     // Check for saved theme preference or default to light theme
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme) {
         html.setAttribute('data-theme', savedTheme);
-    } else if (systemPrefersDark) {
-        html.setAttribute('data-theme', 'dark');
     } else {
+        // Always default to light theme
         html.setAttribute('data-theme', 'light');
     }
 
