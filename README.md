@@ -5,11 +5,14 @@ A scalable collection of custom pages for Cloudflare Secure Web Gateway (SWG) an
 ## Overview
 
 This project implements a Cloudflare Worker that serves multiple custom pages:
-- **Block Page** (`/gateway/`) - Displays policy context when access is blocked by SWG
+- **Gateway Block Page** (`/cf-gateway/`) - Displays policy context when access is blocked by SWG
+- **Access Info Page** (`/cf-access/`) - Displays WARP and device information for authenticated users
 - **Coaching Page** (`/coaching/`) - User security awareness and training (coming soon)
 - **Future pages** - Easily add more custom pages as needed
 
 The architecture is designed to be scalable and maintainable, with shared components and a build system that bundles multiple pages into a single worker.
+
+> **📖 For detailed authentication flow and cookie architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
 
 ## Screenshot
 
@@ -42,8 +45,13 @@ The architecture is designed to be scalable and maintainable, with shared compon
 cfone-custom-pages/
 ├── src/
 │   ├── pages/
-│   │   ├── gateway/
+│   │   ├── cf-gateway/
 │   │   │   └── block.html          # Gateway block page
+│   │   ├── cf-access/
+│   │   │   ├── index.html          # Access info page
+│   │   │   └── scripts/
+│   │   │       ├── warpinfo.js     # WARP info fetching
+│   │   │       └── deviceinfo.js   # Device info fetching
 │   │   └── coaching/
 │   │       └── index.html          # User coaching page
 │   ├── shared/
@@ -53,9 +61,10 @@ cfone-custom-pages/
 │   │       └── theme-toggle.js     # Shared theme toggle logic
 │   ├── worker-template.js          # Worker template with placeholders
 │   └── build.js                    # Build script to bundle pages
-├── worker.js                       # Generated worker (auto-built, git ignored)
-├── wrangler.jsonc                  # Cloudflare Worker config (git ignored)
+├── main.js                         # Generated worker (auto-built)
+├── wrangler.jsonc                  # Cloudflare Worker config
 ├── package.json                    # Dependencies and build scripts
+├── ARCHITECTURE.md                 # Authentication flow documentation
 ├── .gitignore
 └── README.md
 ```
@@ -123,12 +132,28 @@ npm run dev
 ```
 This builds the worker and starts a local development server.
 
-## Configuration in Cloudflare SWG
+## Configuration
+
+### Gateway Block Page in Cloudflare SWG
 
 1. Navigate to **Zero Trust** > **Gateway** > **Firewall Policies**
 2. Edit your block policy
-3. Set **Block page** to: `https://access.0security.net/gateway/`
+3. Set **Block page** to: `https://access.0security.net/cf-gateway/`
 4. Cloudflare will automatically append policy context as query parameters
+
+### Access Info Page with Cloudflare Access
+
+The `/cf-access/` page displays WARP and device information for authenticated users. It leverages Cloudflare Access authentication:
+
+1. **Configure Cloudflare Access** for your domain (e.g., `openwebui.0security.net`)
+2. **Set cookie domain** to `.0security.net` (wildcard for all subdomains)
+3. Users authenticate once and can access `/cf-access/` without re-authentication
+4. The page displays:
+   - User information (name, email)
+   - WARP status and gateway account
+   - Device information (model, name, OS version, ID)
+
+For detailed authentication flow and architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Query Parameters
 

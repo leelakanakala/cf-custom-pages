@@ -9,6 +9,18 @@ export default {
     // Route to appropriate page handler
     if (path === '/cf-gateway/' || path === '/cf-gateway') {
       return serveGatewayPage(url);
+    } else if (path === '/cf-access/' || path === '/cf-access') {
+      return serveAccessPage(url);
+    } else if (path === '/cf-access/api/identity') {
+      return getIdentityFromJWT(request);
+    } else if (path === '/cf-access/api/userdetails') {
+      return handleUserDetails(request, env);
+    } else if (path === '/cf-access/scripts/warpinfo.js') {
+      return serveWarpInfoScript();
+    } else if (path === '/cf-access/scripts/deviceinfo.js') {
+      return serveDeviceInfoScript();
+    } else if (path === '/cf-access/scripts/postureinfo.js') {
+      return servePostureInfoScript();
     } else if (path === '/coaching/' || path === '/coaching') {
       return serveCoachingPage(url);
     } else if (path === '/') {
@@ -19,6 +31,246 @@ export default {
   },
 };
 
+// Helper function to extract device_id from JWT token
+function getDeviceIdFromToken(jwt) {
+  const [header, payload, signature] = jwt.split(".");
+  if (payload) {
+    try {
+      const decoded = JSON.parse(
+        atob(payload.replace(/_/g, "/").replace(/-/g, "+"))
+      );
+      return decoded.device_id || null;
+    } catch (error) {
+      console.error("Error decoding JWT for device_id extraction:", error);
+    }
+  }
+  return null;
+}
+
+// Get identity using Cf-Access-Jwt-Assertion header (Cloudflare's official method)
+async function getIdentityFromJWT(request) {
+  const jwtAssertion = request.headers.get("Cf-Access-Jwt-Assertion");
+  
+  if (!jwtAssertion) {
+    return new Response(JSON.stringify({ 
+      error: "Unauthorized - No JWT assertion found" 
+    }), {
+      status: 401,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+      },
+    });
+  }
+  
+  try {
+    // Fetch identity from get-identity endpoint using JWT assertion as cookie
+    // This follows Cloudflare's official implementation pattern
+    const url = new URL(request.url);
+    const identityUrl = `${url.protocol}//${url.host}/cdn-cgi/access/get-identity`;
+    
+    const identityResponse = await fetch(identityUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': `CF_Authorization=${jwtAssertion}`
+      }
+    });
+    
+    if (!identityResponse.ok) {
+      const errorText = await identityResponse.text();
+      throw new Error(`Identity fetch failed: ${identityResponse.status} - ${errorText}`);
+    }
+    
+    const identityData = await identityResponse.json();
+    
+    return new Response(JSON.stringify(identityData), {
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching identity:', error);
+    return new Response(JSON.stringify({ 
+      error: "Failed to fetch identity data",
+      details: error.message 
+    }), {
+      status: 500,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+      },
+    });
+  }
+}
+
+// Fetch device details from Cloudflare API
+async function fetchDeviceDetails(gateway_account_id, device_id, bearerToken) {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${gateway_account_id}/devices/${device_id}`;
+  console.log(`Fetching device details from: ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${bearerToken}`,
+      },
+    });
+
+    console.log(`Device details response status: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch device details for device_id ${device_id}:`, errorText);
+      return { error: `Failed to fetch device details: ${response.status}` };
+    }
+
+    const deviceDetails = await response.json();
+    console.log(`Fetched device details for device_id ${device_id}`);
+    return deviceDetails;
+  } catch (error) {
+    console.error(`Error fetching device details for device_id ${device_id}:`, error.message);
+    return { error: `Internal Server Error: ${error.message}` };
+  }
+}
+
+// Fetch device posture from Cloudflare API
+async function fetchDevicePosture(gateway_account_id, device_id, bearerToken) {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${gateway_account_id}/devices/${device_id}/posture/check?enrich=false`;
+  console.log(`Fetching device posture from: ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${bearerToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch device posture for device_id ${device_id}:`, errorText);
+      return { error: `Failed to fetch device posture: ${response.status}` };
+    }
+
+    const devicePosture = await response.json();
+    console.log(`Fetched device posture for device_id ${device_id}`);
+    return devicePosture;
+  } catch (error) {
+    console.error(`Error fetching device posture for device_id ${device_id}:`, error.message);
+    return { error: `Internal Server Error: ${error.message}` };
+  }
+}
+
+// Handle /api/userdetails - combines identity, device details, and posture
+async function handleUserDetails(request, env) {
+  const jwtAssertion = request.headers.get("Cf-Access-Jwt-Assertion");
+  
+  if (!jwtAssertion) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  // Extract device_id from token
+  let device_id = getDeviceIdFromToken(jwtAssertion);
+
+  if (!device_id) {
+    console.warn("Device ID not found in token, attempting to fetch from get-identity");
+    
+    // Fallback - fetch identity data to retrieve device_id
+    const identityResponse = await getIdentityFromJWT(request);
+    if (!identityResponse.ok) {
+      return identityResponse;
+    }
+
+    const identityData = await identityResponse.json();
+    device_id = identityData?.identity?.device_id;
+
+    if (!device_id) {
+      return new Response(
+        JSON.stringify({ error: "Device ID not found in identity data" }),
+        { status: 400, headers: { 'content-type': 'application/json' } }
+      );
+    }
+  }
+
+  try {
+    // Fetch identity data
+    const identityResponse = await getIdentityFromJWT(request);
+    if (!identityResponse.ok) {
+      return identityResponse;
+    }
+
+    const identityData = await identityResponse.json();
+    const account_id = identityData.account_id;
+
+    // Check if Bearer token is configured
+    const bearerToken = env?.BEARER_TOKEN;
+    
+    console.log('[DEBUG] API Call Prerequisites:', {
+      hasBearerToken: !!bearerToken,
+      account_id: account_id,
+      device_id: device_id
+    });
+    
+    let deviceDetailsData = {};
+    let devicePostureData = {};
+
+    if (bearerToken && account_id && device_id) {
+      console.log('[DEBUG] Fetching device details and posture from Cloudflare API...');
+      
+      // Fetch device details from API
+      deviceDetailsData = await fetchDeviceDetails(account_id, device_id, bearerToken);
+      
+      if (deviceDetailsData.error) {
+        console.error(`[ERROR] Device details unavailable: ${deviceDetailsData.error}`);
+        deviceDetailsData = {};
+      } else {
+        console.log('[DEBUG] Device details fetched successfully');
+      }
+
+      // Fetch device posture from API
+      devicePostureData = await fetchDevicePosture(account_id, device_id, bearerToken);
+      
+      if (devicePostureData.error) {
+        console.error(`[ERROR] Device posture unavailable: ${devicePostureData.error}`);
+        devicePostureData = {};
+      } else {
+        console.log('[DEBUG] Device posture fetched successfully');
+      }
+    } else {
+      console.error('[ERROR] Cannot fetch device data - Missing prerequisites:', {
+        hasBearerToken: !!bearerToken,
+        hasAccountId: !!account_id,
+        hasDeviceId: !!device_id
+      });
+    }
+
+    const combinedData = {
+      identity: identityData,
+      device: deviceDetailsData,
+      posture: devicePostureData,
+    };
+
+    return new Response(JSON.stringify(combinedData), {
+      headers: { 'content-type': 'application/json' },
+    });
+  } catch (error) {
+    console.error("Error in handleUserDetails:", error);
+    return new Response(
+      JSON.stringify({ error: `Internal Server Error: ${error.message}` }),
+      {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      }
+    );
+  }
+}
+
 // Serve Gateway Block Page
 function serveGatewayPage(url) {
   const gatewayPageHTML = `__GATEWAY_PAGE_HTML__`;
@@ -26,6 +278,54 @@ function serveGatewayPage(url) {
   return new Response(gatewayPageHTML, {
     headers: {
       'content-type': 'text/html;charset=UTF-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
+// Serve Access Page
+function serveAccessPage(url) {
+  const accessPageHTML = `__ACCESS_PAGE_HTML__`;
+  
+  return new Response(accessPageHTML, {
+    headers: {
+      'content-type': 'text/html;charset=UTF-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
+// Serve WARP Info Script
+function serveWarpInfoScript() {
+  const warpInfoJS = `__WARPINFO_JS__`;
+  
+  return new Response(warpInfoJS, {
+    headers: {
+      'content-type': 'application/javascript;charset=UTF-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
+// Serve Device Info Script
+function serveDeviceInfoScript() {
+  const deviceInfoJS = `__DEVICEINFO_JS__`;
+  
+  return new Response(deviceInfoJS, {
+    headers: {
+      'content-type': 'application/javascript;charset=UTF-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
+// Serve Posture Info Script
+function servePostureInfoScript() {
+  const postureInfoJS = `__POSTUREINFO_JS__`;
+  
+  return new Response(postureInfoJS, {
+    headers: {
+      'content-type': 'application/javascript;charset=UTF-8',
       'cache-control': 'public, max-age=3600',
     },
   });
