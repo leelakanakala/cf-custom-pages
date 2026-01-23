@@ -18,6 +18,9 @@ Custom pages for Cloudflare Secure Web Gateway (SWG) and Cloudflare Access, prov
 - Posture checks (Crowdstrike, OS updates)
 - Leverages Cloudflare Access authentication
 
+![Access Info Page](src/img/access-block-page.png)
+*Access info page displaying user identity, device information, and security posture*
+
 ### Coaching Page (`/coaching/`)
 - Security awareness and training (coming soon)
 
